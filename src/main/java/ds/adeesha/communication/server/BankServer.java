@@ -10,7 +10,7 @@ public class BankServer {
         int serverPort = 11436;
         Server server = ServerBuilder.forPort(serverPort).addService(new BalanceServiceImpl()).build();
         server.start();
-        System.out.println("BankServer Started and ready to accept requests on port" + serverPort);
+        System.out.println("BankServer Started and ready to accept requests on port: " + serverPort);
         server.awaitTermination();
     }
 }

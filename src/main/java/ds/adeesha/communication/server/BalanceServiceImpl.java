@@ -15,7 +15,7 @@ public class BalanceServiceImpl extends BalanceServiceGrpc.BalanceServiceImplBas
         System.out.println("Request received..");
         double balance = getAccountBalance(accountId);
         CheckBalanceResponse response = CheckBalanceResponse.newBuilder().setBalance(balance).build();
-        System.out.println("Responding, balance for account " + accountId + " is " + balance);
+        System.out.printf("Responding, balance for account " + accountId + " is %.2f\n\n", balance);
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
