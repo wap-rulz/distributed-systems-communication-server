@@ -10,7 +10,22 @@ message CheckBalanceResponse {
   double balance = 1;
 }
 
-service BalanceService {
+message SetBalanceRequest {
+  string accountId = 1;
+  double value = 2;
+  bool isSentByPrimary = 3;
+}
+
+message SetBalanceResponse {
+  bool status = 1;
+}
+
+service CheckBalanceService {
   rpc checkBalance(CheckBalanceRequest)
       returns (CheckBalanceResponse);
+}
+
+service SetBalanceService {
+  rpc setBalance(SetBalanceRequest)
+      returns(SetBalanceResponse);
 }

@@ -1,13 +1,16 @@
 package ds.adeesha.communication.server;
 
-import ds.adeesha.communication.grpc.generated.BalanceServiceGrpc;
 import ds.adeesha.communication.grpc.generated.CheckBalanceRequest;
 import ds.adeesha.communication.grpc.generated.CheckBalanceResponse;
+import ds.adeesha.communication.grpc.generated.CheckBalanceServiceGrpc;
 import io.grpc.stub.StreamObserver;
 
-import java.util.Random;
+public class CheckBalanceServiceImpl extends CheckBalanceServiceGrpc.CheckBalanceServiceImplBase {
+    private BankServer server;
 
-public class BalanceServiceImpl extends BalanceServiceGrpc.BalanceServiceImplBase {
+    public CheckBalanceServiceImpl(BankServer server) {
+        this.server = server;
+    }
 
     @Override
     public void checkBalance(CheckBalanceRequest request, StreamObserver<CheckBalanceResponse> responseObserver) {
@@ -22,6 +25,6 @@ public class BalanceServiceImpl extends BalanceServiceGrpc.BalanceServiceImplBas
 
     private double getAccountBalance(String accountId) {
         System.out.println("Checking balance for Account " + accountId);
-        return new Random().nextDouble() * 10000;
+        return server.getAccountBalance(accountId);
     }
 }
