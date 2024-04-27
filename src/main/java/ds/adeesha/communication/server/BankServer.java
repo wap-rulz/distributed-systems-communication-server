@@ -1,6 +1,9 @@
 package ds.adeesha.communication.server;
 
 import ds.adeesha.synchronization.DistributedLock;
+import ds.adeesha.synchronization.DistributedTx;
+import ds.adeesha.synchronization.DistributedTxCoordinator;
+import ds.adeesha.synchronization.DistributedTxParticipant;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.apache.zookeeper.KeeperException;
@@ -17,12 +20,22 @@ public class BankServer {
     private DistributedLock leaderLock;
     private AtomicBoolean isLeader = new AtomicBoolean(false);
     public byte[] leaderData;
+    DistributedTx transaction;
+    SetBalanceServiceImpl setBalanceService;
+    CheckBalanceServiceImpl checkBalanceService;
 
     private Map<String, Double> accounts = new HashMap();
 
     public BankServer(String host, int port) throws IOException, InterruptedException, KeeperException {
         this.serverPort = port;
         leaderLock = new DistributedLock("BankServerTestCluster", buildServerData(host, port));
+        setBalanceService = new SetBalanceServiceImpl(this);
+        checkBalanceService = new CheckBalanceServiceImpl(this);
+        transaction = new DistributedTxParticipant(setBalanceService);
+    }
+
+    public DistributedTx getTransaction() {
+        return transaction;
     }
 
     public void setAccountBalance(String accountId, double value) {
@@ -49,13 +62,19 @@ public class BankServer {
     public void startServer() throws IOException, InterruptedException, KeeperException {
         Server server = ServerBuilder
                 .forPort(serverPort)
-                .addService(new CheckBalanceServiceImpl(this))
-                .addService(new SetBalanceServiceImpl(this))
+                .addService(checkBalanceService)
+                .addService(setBalanceService)
                 .build();
         server.start();
-        System.out.println("BankServer Started and ready to accept requests on port " + serverPort);
+        System.out.println("BankServer Started and ready to accept requests on port: " + serverPort);
         tryToBeLeader();
         server.awaitTermination();
+    }
+
+    private void beTheLeader() {
+        System.out.println("I got the leader lock. Now acting as primary");
+        isLeader.set(true);
+        transaction = new DistributedTxCoordinator(setBalanceService);
     }
 
     public static String buildServerData(String IP, int port) {
@@ -94,9 +113,8 @@ public class BankServer {
                     Thread.sleep(10000);
                     leader = leaderLock.tryAcquireLock();
                 }
-                System.out.println("I got the leader lock.Now acting as primary");
-                isLeader.set(true);
                 currentLeaderData = null;
+                beTheLeader();
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
             }
